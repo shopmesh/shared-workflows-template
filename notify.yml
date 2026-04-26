@@ -1,0 +1,44 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Reusable: SendGrid failure notification
+# Only called when a job in the caller workflow has failed.
+# ──────────────────────────────────────────────────────────────────────────────
+name: notify
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+    secrets:
+      SENDGRID_API_KEY:
+        required: true
+      NOTIFY_FROM_EMAIL:
+        required: true
+      NOTIFY_TO_EMAIL:
+        required: true
+
+jobs:
+  notify:
+    name: Send Failure Email
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email via SendGrid
+        uses: licenseware/send-email-notification@v1
+        with:
+          api-key:       ${{ secrets.SENDGRID_API_KEY }}
+          from-email:    ${{ secrets.NOTIFY_FROM_EMAIL }}
+          to-email:      ${{ secrets.NOTIFY_TO_EMAIL }}
+          subject:       "❌ CI Failed — ${{ inputs.service_name }} (${{ github.ref_name }})"
+          markdown-body: |
+            ## CI Pipeline Failed — `${{ inputs.service_name }}`
+
+            | | |
+            |---|---|
+            | **Service** | `${{ inputs.service_name }}` |
+            | **Branch**  | `${{ github.ref_name }}` |
+            | **Actor**   | ${{ github.actor }} |
+            | **Commit**  | ${{ github.event.head_commit.message }} |
+            | **SHA**     | `${{ github.sha }}` |
+
+            [🔗 View Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})

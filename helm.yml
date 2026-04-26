@@ -1,0 +1,63 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Reusable: Helm Values Updater
+#
+# Updates the image tag for a service in the Helm repo's values.yaml
+# and commits the change back.
+#
+# Secret required: HELM_CHARTS_TOKEN — PAT with contents:write on helm_repo
+# ──────────────────────────────────────────────────────────────────────────────
+name: helm
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      helm_repo:
+        description: "org/repo of your GitOps Helm repository"
+        required: true
+        type: string
+      values_file:
+        description: "Path to values.yaml inside helm_repo"
+        required: false
+        type: string
+        default: "helm-charts/values.yaml"
+    secrets:
+      HELM_CHARTS_TOKEN:
+        required: true
+
+jobs:
+  update-helm:
+    name: Update Helm Values
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Helm repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.helm_repo }}
+          token:      ${{ secrets.HELM_CHARTS_TOKEN }}
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Update image tag
+        run: |
+          yq e '.${{ inputs.service_name }}.image.tag = "${{ inputs.image_tag }}"' \
+            -i ${{ inputs.values_file }}
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${{ inputs.values_file }}
+          git diff --cached --quiet && echo "No change" && exit 0
+          git commit -m "chore(${{ inputs.service_name }}): bump image tag to ${{ inputs.image_tag }}"
+          git push
