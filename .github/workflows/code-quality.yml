@@ -1,9 +1,3 @@
-# ──────────────────────────────────────────────────────────────────────────────
-# Reusable: Code Quality — SonarQube + Snyk
-#
-# Runs ONLY on pull_request (gated by github_event_name input).
-# Supported runtimes: node | python
-# ──────────────────────────────────────────────────────────────────────────────
 name: code-quality
 
 on:
@@ -31,11 +25,12 @@ on:
         required: true
 
 jobs:
-  # ── SonarQube ─────────────────────────────────────────────────────────────
+  # ─────────────────────────────────────────────
+  # SONARQUBE
+  # ─────────────────────────────────────────────
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
-    if: inputs.github_event_name == 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +45,7 @@ jobs:
             -Dsonar.projectKey=${{ inputs.service_name }}
             -Dsonar.projectName=${{ inputs.service_name }}
         env:
-          SONAR_TOKEN:    ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: SonarQube Quality Gate
@@ -61,12 +56,13 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # ── Snyk ──────────────────────────────────────────────────────────────────
+  # ─────────────────────────────────────────────
+  # SNYK
+  # ─────────────────────────────────────────────
   snyk:
     name: Snyk
     runs-on: ubuntu-latest
     needs: sonarqube
-    if: inputs.github_event_name == 'pull_request'
     defaults:
       run:
         working-directory: ${{ inputs.service_path }}
@@ -98,7 +94,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Setup Snyk
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@v3
 
       - name: Snyk scan (Node)
         if: inputs.runtime == 'node'
