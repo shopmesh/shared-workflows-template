@@ -94,7 +94,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Setup Snyk
-        uses: snyk/actions/setup@v2
+        uses: snyk/actions/setup@v1
 
       - name: Snyk scan (Node)
         if: inputs.runtime == 'node'
