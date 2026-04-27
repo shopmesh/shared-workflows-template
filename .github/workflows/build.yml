@@ -91,6 +91,19 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ steps.tag.outputs.tag }}
 
+      # ── Tag and push convenience aliases ──────────────────────────────────────
+      - name: Tag and push dev-latest / latest
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ steps.tag.outputs.tag }} \
+                       ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:latest
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:latest
+          else
+            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ steps.tag.outputs.tag }} \
+                       ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:dev-latest
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:dev-latest
+          fi
+
       # ── Create git tag on main after a successful push ───────────────────────
       - name: Create git tag
         if: github.ref_name == 'main'
