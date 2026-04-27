@@ -50,7 +50,7 @@ jobs:
 
       - name: Update image tag
         run: |
-          yq e '.${{ inputs.service_name }}.image.tag = "${{ inputs.image_tag }}"' \
+          yq e '.image.tag = "${{ inputs.image_tag }}"' \
             -i ${{ inputs.values_file }}
 
       - name: Commit and push
